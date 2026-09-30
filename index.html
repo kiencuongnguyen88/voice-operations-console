@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Turn spoken intent into verified, human-approved, auditable action receipts." />
+  <title>Voice Operations Console</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">ASSEMBLYAI VOICE AGENT HACKATHON</p>
+      <h1>Voice Operations Console</h1>
+      <p class="lead">Speech is convenient. Operations need proof. Convert a spoken instruction into structured fields, verify critical values, require explicit human confirmation, then issue an auditable receipt.</p>
+      <div class="flow" aria-label="Workflow">
+        <span>VOICE</span><b>→</b><span>TRANSCRIPT</span><b>→</b><span>VERIFY</span><b>→</b><span>CONFIRM</span><b>→</b><span>RECEIPT</span>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <p class="step">01 · LISTEN</p>
+          <h2>AssemblyAI realtime transcription</h2>
+        </div>
+        <span id="status" class="status idle">Idle</span>
+      </div>
+      <p class="hint">Try: <strong>“Send a quote for 12 million VND to Customer A tomorrow.”</strong> Vietnamese is also supported by the selected realtime model.</p>
+      <div class="actions">
+        <button id="startBtn" class="primary">Start microphone</button>
+        <button id="stopBtn" disabled>Stop & finalize</button>
+      </div>
+      <div class="transcript-box">
+        <label>Live transcript</label>
+        <p id="transcript" class="transcript">No speech captured yet.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <p class="step">02 · STRUCTURE</p>
+          <h2>Operational fields</h2>
+        </div>
+        <span id="riskBadge" class="status idle">Awaiting voice</span>
+      </div>
+      <div class="fields">
+        <div><label>Action</label><output id="actionField">—</output></div>
+        <div><label>Recipient</label><output id="recipientField">—</output></div>
+        <div class="critical"><label>Amount · critical</label><output id="amountField">—</output></div>
+        <div><label>Date</label><output id="dateField">—</output></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <p class="step">03 · HUMAN GATE</p>
+          <h2>Read back before action</h2>
+        </div>
+      </div>
+      <div id="readback" class="readback">Complete a voice turn first. Critical fields must be read back before confirmation.</div>
+      <div class="actions">
+        <button id="speakBtn" disabled>Read back aloud</button>
+        <button id="confirmBtn" class="confirm" disabled>Confirm</button>
+        <button id="rejectBtn" class="danger" disabled>Reject</button>
+      </div>
+      <p class="hint">This demo never sends a quote or performs an external side effect. Confirmation only creates an execution-ready receipt.</p>
+    </section>
+
+    <section class="card receipt-card">
+      <div class="section-head">
+        <div>
+          <p class="step">04 · EVIDENCE</p>
+          <h2>Auditable receipt</h2>
+        </div>
+        <button id="copyBtn" disabled>Copy JSON</button>
+      </div>
+      <pre id="receipt">No receipt yet.</pre>
+    </section>
+
+    <footer>
+      <p>Built for the AssemblyAI Voice Agent Hackathon · Realtime STT: Universal-3.5 Pro Realtime · Human approval is a hard gate.</p>
+    </footer>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
