@@ -1,0 +1,7 @@
+{
+  "name": "voice-operations-console",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Voice intent to verified, human-approved, auditable action receipts.",
+  "engines": { "node": "24.x" }
+}
