@@ -206,6 +206,8 @@ async function startRecording() {
     const params = new URLSearchParams({
       sample_rate: "16000",
       speech_model: "universal-3-5-pro",
+      language_code: "vi",
+      mode: "max_accuracy",
       token: tokenPayload.token
     });
     ws = new WebSocket("wss://streaming.assemblyai.com/v3/ws?" + params.toString());
@@ -285,20 +287,29 @@ async function cleanupAudio() {
 async function stopRecording() {
   ui.stop.disabled = true;
   setStatus("Finalizing…", "warn");
+
+  // Preserve whatever the user can currently see before audio teardown.
+  const visibleAtStop = normalize([finalTranscript, partialTranscript].filter(Boolean).join(" "));
   await cleanupAudio();
 
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: "ForceEndpoint" }));
     setTimeout(() => {
       if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "Terminate" }));
-    }, 900);
+    }, 1400);
   }
 
   setTimeout(() => {
-    if (finalTranscript) renderFields(parseFields(finalTranscript));
+    const bestTranscript = normalize(finalTranscript || visibleAtStop);
+    if (bestTranscript) {
+      finalTranscript = bestTranscript;
+      partialTranscript = "";
+      updateTranscript();
+      renderFields(parseFields(bestTranscript));
+    }
     ui.start.disabled = false;
     if (ui.status.textContent === "Finalizing…") setStatus("Finalized", "idle");
-  }, 1100);
+  }, 1550);
 }
 
 function speakReadback() {
