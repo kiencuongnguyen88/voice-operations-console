@@ -69,6 +69,15 @@ function vietnameseNumberValue(raw) {
 function parseAmount(text) {
   const t = text.toLowerCase().normalize("NFC").replace(/,/g, "");
 
+  const englishNumbers = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+    "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
+    "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20
+  };
+  let em = t.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\s+million\b/i);
+  if (em) return englishNumbers[em[1].toLowerCase()] * 1000000;
+
   let m = t.match(/(?:vnd|₫)?\s*(\d+(?:\.\d+)?)\s*(?:triệu|million)(?=\s|vnd|₫|đồng|dong|[,.!?]|$)/i);
   if (m) return Math.round(Number(m[1]) * 1000000);
 
@@ -206,8 +215,7 @@ async function startRecording() {
     const params = new URLSearchParams({
       sample_rate: "16000",
       speech_model: "universal-3-5-pro",
-      language_code: "vi",
-      mode: "max_accuracy",
+      language_code: "en",
       token: tokenPayload.token
     });
     ws = new WebSocket("wss://streaming.assemblyai.com/v3/ws?" + params.toString());
