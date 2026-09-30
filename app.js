@@ -7,7 +7,8 @@ const ui = {
   amount: $("amountField"), date: $("dateField"),
   readback: $("readback"), speak: $("speakBtn"),
   confirm: $("confirmBtn"), reject: $("rejectBtn"),
-  receipt: $("receipt"), copy: $("copyBtn")
+  receipt: $("receipt"), copy: $("copyBtn"),
+  language: $("languageSelect"), languageHint: $("languageHint")
 };
 
 let ws;
@@ -212,12 +213,13 @@ async function startRecording() {
       throw new Error(tokenPayload.error || "Temporary token unavailable");
     }
 
+    const selectedLanguage = ui.language.value;
     const params = new URLSearchParams({
       sample_rate: "16000",
       speech_model: "universal-3-5-pro",
-      language_code: "en",
       token: tokenPayload.token
     });
+    if (selectedLanguage !== "auto") params.set("language_code", selectedLanguage);
     ws = new WebSocket("wss://streaming.assemblyai.com/v3/ws?" + params.toString());
 
     await new Promise((resolve, reject) => {
@@ -354,6 +356,18 @@ function createReceipt(decision) {
   ui.reject.disabled = true;
   return receipt;
 }
+
+function updateLanguageHint() {
+  if (ui.language.value === "vi") {
+    ui.languageHint.innerHTML = 'Tiếng Việt: <strong>“Gửi báo giá 12 triệu cho khách A vào ngày mai.”</strong>';
+  } else if (ui.language.value === "auto") {
+    ui.languageHint.innerHTML = 'Auto / Multilingual: AssemblyAI tự nhận diện ngôn ngữ. Dùng khi có chuyển đổi ngôn ngữ; với một ngôn ngữ cố định, nên chọn trực tiếp.';
+  } else {
+    ui.languageHint.innerHTML = 'English: <strong>“Send a quote for 12 million VND to Customer A tomorrow.”</strong>';
+  }
+}
+ui.language.addEventListener("change", updateLanguageHint);
+updateLanguageHint();
 
 ui.start.addEventListener("click", startRecording);
 ui.stop.addEventListener("click", stopRecording);
