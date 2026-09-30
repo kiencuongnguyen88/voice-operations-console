@@ -228,7 +228,6 @@ async function startRecording() {
       : selectedLanguage === "en"
         ? "The user will speak a short operational instruction about sending or creating a quote, a VND amount, a customer, and a date."
         : "The user will speak a short operational instruction that may be English or Vietnamese, about a quote, VND amount, customer, and date.";
-    params.set("agent_context", context);
     ws = new WebSocket("wss://streaming.assemblyai.com/v3/ws?" + params.toString());
 
     await new Promise((resolve, reject) => {
@@ -237,23 +236,20 @@ async function startRecording() {
       ws.addEventListener("error", () => { clearTimeout(timer); reject(new Error("AssemblyAI WebSocket connection failed")); }, { once: true });
     });
 
-    // Bias recognition toward the small operational vocabulary used by this demo.
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: "UpdateConfiguration",
-        keyterms: selectedLanguage === "vi"
-          ? ["báo giá", "triệu", "VND", "khách hàng", "ngày mai"]
-          : selectedLanguage === "en"
-            ? ["quote", "million", "VND", "Customer", "tomorrow"]
-            : ["quote", "báo giá", "million", "triệu", "VND", "Customer", "khách hàng", "tomorrow", "ngày mai"]
-      }));
-    }
-
     ws.addEventListener("message", (event) => {
       const msg = JSON.parse(event.data);
       if (msg.type === "Begin") {
         sessionId = msg.id || null;
         setStatus("AssemblyAI live", "live");
+        ws.send(JSON.stringify({
+          type: "UpdateConfiguration",
+          agent_context: context,
+          keyterms: selectedLanguage === "vi"
+            ? ["báo giá", "triệu", "VND", "khách hàng", "ngày mai"]
+            : selectedLanguage === "en"
+              ? ["quote", "million", "VND", "Customer", "tomorrow"]
+              : ["quote", "báo giá", "million", "triệu", "VND", "Customer", "khách hàng", "tomorrow", "ngày mai"]
+        }));
       } else if (msg.type === "Turn") {
         const text = normalize(msg.transcript || "");
         if (msg.end_of_turn) {
@@ -270,8 +266,13 @@ async function startRecording() {
       }
     });
 
-    ws.addEventListener("close", () => {
-      if (ui.stop.disabled === false) setStatus("Connection closed", "idle");
+    ws.addEventListener("close", (event) => {
+      if (ui.stop.disabled === false) {
+        setStatus("Connection closed", "idle");
+        ui.transcript.textContent = event.reason
+          ? "Connection closed: " + event.reason
+          : "Connection closed (code " + event.code + ")";
+      }
     });
 
     mediaStream = await navigator.mediaDevices.getUserMedia({
