@@ -26,7 +26,15 @@
         </div>
         <span id="status" class="status idle">Idle</span>
       </div>
-      <p class="hint">Try: <strong>“Send a quote for 12 million VND to Customer A tomorrow.”</strong> Vietnamese is also supported by the selected realtime model.</p>
+      <div class="actions">
+        <label for="languageSelect">Input language</label>
+        <select id="languageSelect" aria-label="Input language">
+          <option value="en" selected>English</option>
+          <option value="vi">Tiếng Việt</option>
+          <option value="auto">Auto / Multilingual</option>
+        </select>
+      </div>
+      <p id="languageHint" class="hint">English: <strong>“Send a quote for 12 million VND to Customer A tomorrow.”</strong></p>
       <div class="actions">
         <button id="startBtn" class="primary">Start microphone</button>
         <button id="stopBtn" disabled>Stop & finalize</button>
