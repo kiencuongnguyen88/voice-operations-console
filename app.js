@@ -216,10 +216,19 @@ async function startRecording() {
     const selectedLanguage = ui.language.value;
     const params = new URLSearchParams({
       sample_rate: "16000",
+      encoding: "pcm_s16le",
       speech_model: "universal-3-5-pro",
+      mode: "max_accuracy",
       token: tokenPayload.token
     });
     if (selectedLanguage !== "auto") params.set("language_code", selectedLanguage);
+
+    const context = selectedLanguage === "vi"
+      ? "Người dùng sẽ nói một chỉ dẫn vận hành ngắn về gửi hoặc tạo báo giá, số tiền VND, khách hàng và ngày thực hiện."
+      : selectedLanguage === "en"
+        ? "The user will speak a short operational instruction about sending or creating a quote, a VND amount, a customer, and a date."
+        : "The user will speak a short operational instruction that may be English or Vietnamese, about a quote, VND amount, customer, and date.";
+    params.set("agent_context", context);
     ws = new WebSocket("wss://streaming.assemblyai.com/v3/ws?" + params.toString());
 
     await new Promise((resolve, reject) => {
@@ -227,6 +236,18 @@ async function startRecording() {
       ws.addEventListener("open", () => { clearTimeout(timer); resolve(); }, { once: true });
       ws.addEventListener("error", () => { clearTimeout(timer); reject(new Error("AssemblyAI WebSocket connection failed")); }, { once: true });
     });
+
+    // Bias recognition toward the small operational vocabulary used by this demo.
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: "UpdateConfiguration",
+        keyterms: selectedLanguage === "vi"
+          ? ["báo giá", "triệu", "VND", "khách hàng", "ngày mai"]
+          : selectedLanguage === "en"
+            ? ["quote", "million", "VND", "Customer", "tomorrow"]
+            : ["quote", "báo giá", "million", "triệu", "VND", "Customer", "khách hàng", "tomorrow", "ngày mai"]
+      }));
+    }
 
     ws.addEventListener("message", (event) => {
       const msg = JSON.parse(event.data);
@@ -260,7 +281,7 @@ async function startRecording() {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     await audioContext.resume();
     sourceNode = audioContext.createMediaStreamSource(mediaStream);
-    processorNode = audioContext.createScriptProcessor(4096, 1, 1);
+    processorNode = audioContext.createScriptProcessor(2048, 1, 1);
     muteNode = audioContext.createGain();
     muteNode.gain.value = 0;
 
