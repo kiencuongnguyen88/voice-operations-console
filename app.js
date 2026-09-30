@@ -30,10 +30,57 @@ function normalize(text) {
   return text.normalize("NFC").replace(/\s+/g, " ").trim();
 }
 
+function vietnameseNumberValue(raw) {
+  const text = raw.toLowerCase().normalize("NFC").replace(/[-–—]/g, " ").replace(/\s+/g, " ").trim();
+  const direct = Number(text.replace(",", "."));
+  if (Number.isFinite(direct)) return direct;
+
+  const units = {
+    "không": 0, "một": 1, "mốt": 1, "hai": 2, "ba": 3, "bốn": 4, "tư": 4,
+    "năm": 5, "lăm": 5, "sáu": 6, "bảy": 7, "tám": 8, "chín": 9
+  };
+  const tokens = text.split(" ").filter(Boolean);
+  let total = 0;
+  let current = 0;
+  let seen = false;
+
+  for (const token of tokens) {
+    if (Object.prototype.hasOwnProperty.call(units, token)) {
+      current += units[token];
+      seen = true;
+    } else if (token === "mười") {
+      current += 10;
+      seen = true;
+    } else if (token === "mươi") {
+      current = (current || 1) * 10;
+      seen = true;
+    } else if (token === "trăm") {
+      current = (current || 1) * 100;
+      seen = true;
+    } else if (token === "linh" || token === "lẻ") {
+      continue;
+    } else {
+      return null;
+    }
+  }
+  return seen ? total + current : null;
+}
+
 function parseAmount(text) {
-  const t = text.toLowerCase().replace(/,/g, "");
+  const t = text.toLowerCase().normalize("NFC").replace(/,/g, "");
+
   let m = t.match(/(?:vnd|₫)?\s*(\d+(?:\.\d+)?)\s*(?:triệu|million)(?=\s|vnd|₫|đồng|dong|[,.!?]|$)/i);
   if (m) return Math.round(Number(m[1]) * 1000000);
+
+  m = t.match(/(?:vnd|₫)?\s*(không|một|mốt|hai|ba|bốn|tư|năm|lăm|sáu|bảy|tám|chín|mười)(?:\s+(không|một|mốt|hai|ba|bốn|tư|năm|lăm|sáu|bảy|tám|chín|mười|mươi|trăm|linh|lẻ))*\s+triệu(?=\s|vnd|₫|đồng|dong|[,.!?]|$)/i);
+  if (m) {
+    const phrase = m[0]
+      .replace(/^(?:vnd|₫)?\s*/i, "")
+      .replace(/\s+triệu(?:\s*(?:vnd|₫|đồng|dong))?\s*$/i, "");
+    const value = vietnameseNumberValue(phrase);
+    if (value != null) return Math.round(value * 1000000);
+  }
+
   m = t.match(/(?:vnd|₫)?\s*(\d{4,12})\s*(?:vnd|₫|đồng|dong)?(?=\s|[,.!?]|$)/i);
   if (m) return Number(m[1]);
   return null;
@@ -64,7 +111,7 @@ function parseFields(text) {
   }
 
   let action = null;
-  if (/(?:báo giá|\bquote\b)/i.test(clean)) action = /(?:gửi|\bsend\b)/i.test(clean) ? "send quote" : "create quote";
+  if (/(?:báo giá|\bquote\b)/i.test(clean)) action = /(?:gửi|người|\bsend\b)/i.test(clean) ? "send quote" : "create quote";
   else if (/(?:gửi|\bsend\b)/i.test(clean)) action = "send";
   else if (/(?:tạo|\bcreate\b)/i.test(clean)) action = "create task";
 
