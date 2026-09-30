@@ -32,9 +32,9 @@ function normalize(text) {
 
 function parseAmount(text) {
   const t = text.toLowerCase().replace(/,/g, "");
-  let m = t.match(/(?:vnd|₫)?\s*(\d+(?:\.\d+)?)\s*(triệu|million)\b/i);
+  let m = t.match(/(?:vnd|₫)?\s*(\d+(?:\.\d+)?)\s*(?:triệu|million)(?=\s|vnd|₫|đồng|dong|[,.!?]|$)/i);
   if (m) return Math.round(Number(m[1]) * 1000000);
-  m = t.match(/(?:vnd|₫)?\s*(\d{4,12})\s*(?:vnd|₫|đồng|dong)?\b/i);
+  m = t.match(/(?:vnd|₫)?\s*(\d{4,12})\s*(?:vnd|₫|đồng|dong)?(?=\s|[,.!?]|$)/i);
   if (m) return Number(m[1]);
   return null;
 }
@@ -64,9 +64,9 @@ function parseFields(text) {
   }
 
   let action = null;
-  if (/\b(báo giá|quote)\b/i.test(clean)) action = /\b(gửi|send)\b/i.test(clean) ? "send quote" : "create quote";
-  else if (/\b(gửi|send)\b/i.test(clean)) action = "send";
-  else if (/\b(tạo|create)\b/i.test(clean)) action = "create task";
+  if (/(?:báo giá|\bquote\b)/i.test(clean)) action = /(?:gửi|\bsend\b)/i.test(clean) ? "send quote" : "create quote";
+  else if (/(?:gửi|\bsend\b)/i.test(clean)) action = "send";
+  else if (/(?:tạo|\bcreate\b)/i.test(clean)) action = "create task";
 
   return { action, recipient, amount, currency: amount ? "VND" : null, date, source_text: clean };
 }
